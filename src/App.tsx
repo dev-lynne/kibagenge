@@ -1,13 +1,22 @@
-import './App.css'
+﻿import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Navbar } from './components/landing/Navbar'
+import Landing from './pages/Landing'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
 
 function App() {
   return (
-     <div className="min-h-screen bg-pink-50 flex items-center justify-center">
-      <h1 className="text-5xl font-bold text-pink-700">
-        Chama Savings System
-      </h1>
-    </div>
-  );
+    <BrowserRouter>
+      <div className="min-h-screen bg-white text-slate-950">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  )
 }
 
 export default App;
