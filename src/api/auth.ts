@@ -21,6 +21,7 @@ export interface TokenResponse {
   access_token: string
   refresh_token: string
   token_type: string
+  full_name: string
 }
 
 export const registerUser = (payload: RegisterPayload) => api.post('/auth/register', payload)
