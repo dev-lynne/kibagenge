@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createChama } from '../api/chama'
+import { joinChama } from '../api/join'
 
 export default function Dashboard() {
   const userLabel = useMemo(() => localStorage.getItem('auth_full_name') || localStorage.getItem('auth_user') || 'member', [])
@@ -13,6 +14,7 @@ export default function Dashboard() {
     max_members: '20',
     rotation_method: 'manual',
   })
+  const [inviteCode, setInviteCode] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -27,7 +29,7 @@ export default function Dashboard() {
         contribution_amount: Number(form.contribution_amount),
         max_members: Number(form.max_members),
       })
-      setMessage(response.data.message || 'Chama created successfully.')
+      setMessage(`${response.data.message || 'Chama created successfully.'} Invite code: ${response.data.invite_code || 'N/A'}`)
       setForm({
         name: '',
         description: '',
@@ -128,7 +130,25 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <h2 className="font-semibold text-slate-900">Join chama</h2>
-                <p className="mt-2 text-sm text-slate-600">Use an invite link or code to request membership to an existing group.</p>
+                <p className="mt-2 text-sm text-slate-600">Use an invite code to request membership to an existing group.</p>
+                <form
+                  onSubmit={async (event) => {
+                    event.preventDefault()
+                    setError('')
+                    setMessage('')
+                    try {
+                      const response = await joinChama({ invite_code: inviteCode })
+                      setMessage(response.data.message || 'Join request submitted.')
+                      setInviteCode('')
+                    } catch (err: any) {
+                      setError(err?.response?.data?.detail || 'Unable to join chama')
+                    }
+                  }}
+                  className="mt-4 space-y-3"
+                >
+                  <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} placeholder="Enter invite code" className="w-full rounded-xl border border-slate-200 px-4 py-3" required />
+                  <button type="submit" className="rounded-xl border border-[#C2185B] px-4 py-2 text-sm font-semibold text-[#6A1B9A]">Request to join</button>
+                </form>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <h2 className="font-semibold text-slate-900">My groups</h2>
