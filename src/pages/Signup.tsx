@@ -17,6 +17,7 @@ export default function Signup() {
     try {
       const response = await registerUser({ full_name: fullName, phone, email, password })
       setMessage(response.data.message || 'Account created successfully.')
+      window.location.href = '/login'
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Registration failed')
     }
