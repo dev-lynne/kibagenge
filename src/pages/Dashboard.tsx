@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { createChama } from '../api/chama'
+import { useEffect, useMemo, useState } from 'react'
+import { createChama, getMyChamas, type ChamaSummary } from '../api/chama'
 import { joinChama } from '../api/join'
 
 export default function Dashboard() {
@@ -17,6 +17,20 @@ export default function Dashboard() {
   const [inviteCode, setInviteCode] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [myChamas, setMyChamas] = useState<ChamaSummary[]>([])
+
+  useEffect(() => {
+    const loadChamas = async () => {
+      try {
+        const response = await getMyChamas()
+        setMyChamas(response.data.chamas || [])
+      } catch {
+        setMyChamas([])
+      }
+    }
+
+    loadChamas()
+  }, [])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -153,6 +167,27 @@ export default function Dashboard() {
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <h2 className="font-semibold text-slate-900">My groups</h2>
                 <p className="mt-2 text-sm text-slate-600">Track your active chama memberships and pending approvals in one view.</p>
+
+                <div className="mt-4 space-y-3">
+                  {myChamas.length === 0 ? (
+                    <p className="text-sm text-slate-500">You have not joined or created any chamas yet.</p>
+                  ) : (
+                    myChamas.map((chama) => (
+                      <div key={chama.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{chama.name}</p>
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{chama.role}</p>
+                          </div>
+                          <span className="rounded-full bg-[#F8BBD0] px-2.5 py-1 text-[11px] font-semibold text-[#AD1457]">{chama.status}</span>
+                        </div>
+                        <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <span className="font-medium">Invite code:</span> {chama.invite_code}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>

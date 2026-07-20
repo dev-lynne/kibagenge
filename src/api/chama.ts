@@ -16,9 +16,26 @@ export interface ChamaCreatePayload {
   rotation_method: string
 }
 
+export interface ChamaSummary {
+  id: string
+  name: string
+  invite_code: string
+  role: string
+  status: string
+}
+
 export const createChama = (payload: ChamaCreatePayload) => {
   const token = localStorage.getItem('access_token')
   return api.post('/chama/create', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
+
+export const getMyChamas = () => {
+  const token = localStorage.getItem('access_token')
+  return api.get<{ chamas: ChamaSummary[] }>('/chama/my', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
