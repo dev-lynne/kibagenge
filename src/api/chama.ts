@@ -24,6 +24,14 @@ export interface ChamaSummary {
   status: string
 }
 
+export interface PendingRequest {
+  membership_id: string
+  user_id: string
+  user_name: string
+  role: string
+  status: string
+}
+
 export const createChama = (payload: ChamaCreatePayload) => {
   const token = localStorage.getItem('access_token')
   return api.post('/chama/create', payload, {
@@ -36,6 +44,24 @@ export const createChama = (payload: ChamaCreatePayload) => {
 export const getMyChamas = () => {
   const token = localStorage.getItem('access_token')
   return api.get<{ chamas: ChamaSummary[] }>('/chama/my', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
+
+export const getPendingRequests = () => {
+  const token = localStorage.getItem('access_token')
+  return api.get<{ requests: PendingRequest[] }>('/chama/pending-requests', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
+
+export const reviewJoinRequest = (payload: { membership_id: string; action: string }) => {
+  const token = localStorage.getItem('access_token')
+  return api.post('/chama/review-request', payload, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

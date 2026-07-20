@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createChama, getMyChamas, type ChamaSummary } from '../api/chama'
+import { createChama, getMyChamas, getPendingRequests, reviewJoinRequest, type ChamaSummary, type PendingRequest } from '../api/chama'
 import { joinChama } from '../api/join'
 
 export default function Dashboard() {
@@ -18,18 +18,21 @@ export default function Dashboard() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [myChamas, setMyChamas] = useState<ChamaSummary[]>([])
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
+
+  const loadDashboardData = async () => {
+    try {
+      const [chamasResponse, pendingResponse] = await Promise.all([getMyChamas(), getPendingRequests()])
+      setMyChamas(chamasResponse.data.chamas || [])
+      setPendingRequests(pendingResponse.data.requests || [])
+    } catch {
+      setMyChamas([])
+      setPendingRequests([])
+    }
+  }
 
   useEffect(() => {
-    const loadChamas = async () => {
-      try {
-        const response = await getMyChamas()
-        setMyChamas(response.data.chamas || [])
-      } catch {
-        setMyChamas([])
-      }
-    }
-
-    loadChamas()
+    void loadDashboardData()
   }, [])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -54,6 +57,7 @@ export default function Dashboard() {
         max_members: '20',
         rotation_method: 'manual',
       })
+      await loadDashboardData()
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Unable to create chama')
     }
@@ -154,6 +158,7 @@ export default function Dashboard() {
                       const response = await joinChama({ invite_code: inviteCode })
                       setMessage(response.data.message || 'Join request submitted.')
                       setInviteCode('')
+                      await loadDashboardData()
                     } catch (err: any) {
                       setError(err?.response?.data?.detail || 'Unable to join chama')
                     }
@@ -179,7 +184,9 @@ export default function Dashboard() {
                             <p className="font-semibold text-slate-900">{chama.name}</p>
                             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{chama.role}</p>
                           </div>
-                          <span className="rounded-full bg-[#F8BBD0] px-2.5 py-1 text-[11px] font-semibold text-[#AD1457]">{chama.status}</span>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${chama.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#F8BBD0] text-[#AD1457]'}`}>
+                            {chama.status}
+                          </span>
                         </div>
                         <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
                           <span className="font-medium">Invite code:</span> {chama.invite_code}
@@ -188,6 +195,31 @@ export default function Dashboard() {
                     ))
                   )}
                 </div>
+
+                {pendingRequests.length > 0 ? (
+                  <div className="mt-5 rounded-xl border border-[#F8BBD0] bg-[#FFF8FB] p-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-slate-900">Pending approvals</h3>
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#AD1457]">Review</span>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {pendingRequests.map((request) => (
+                        <div key={request.membership_id} className="rounded-lg border border-[#F8BBD0] bg-white p-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{request.user_name}</p>
+                              <p className="text-xs text-slate-500">Requested to join</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={async () => { try { await reviewJoinRequest({ membership_id: request.membership_id, action: 'approve' }); setMessage('Join request approved.'); await loadDashboardData() } catch (err: any) { setError(err?.response?.data?.detail || 'Unable to approve request') } }} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white">Approve</button>
+                              <button type="button" onClick={async () => { try { await reviewJoinRequest({ membership_id: request.membership_id, action: 'reject' }); setMessage('Join request rejected.'); await loadDashboardData() } catch (err: any) { setError(err?.response?.data?.detail || 'Unable to reject request') } }} className="rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">Reject</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
